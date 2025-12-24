@@ -1,17 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { parseLogFile } from "@/lib/parse-log";
 import { SessionCard } from "@/components/SessionCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Session } from "@/lib/types";
-import { FileText, ClipboardPaste, Trash2 } from "lucide-react";
+import { FileText, ClipboardPaste, Trash2, UploadCloud } from "lucide-react";
 
 export function LogViewer() {
   const [logContent, setLogContent] = useState("");
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isParsed, setIsParsed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleParse = () => {
     if (!logContent.trim()) return;
@@ -33,6 +35,50 @@ export function LogViewer() {
     } catch {
       // Clipboard access denied, user can still paste manually
     }
+  };
+
+  const handleFileRead = (file: File) => {
+    const isAllowed = /\.((log)|(txt))$/i.test(file.name);
+    if (!isAllowed) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = typeof reader.result === "string" ? reader.result : "";
+      setLogContent(text);
+      setSessions([]);
+      setIsParsed(false);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleFileRead(file);
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const related = event.relatedTarget as Node | null;
+    if (!related || !event.currentTarget.contains(related)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleFileInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) handleFileRead(file);
+    event.target.value = "";
+  };
+
+  const triggerFilePicker = () => {
+    fileInputRef.current?.click();
   };
 
   const totalEvents = sessions.reduce((sum, s) => sum + s.events.length, 0);
@@ -84,16 +130,24 @@ export function LogViewer() {
             </div>
 
             <div className="space-y-5">
-              <div className="relative">
+              <div
+                onDragOver={handleDragOver}
+                onDragEnter={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`relative rounded-[2rem] border ${
+                  isDragging ? "border-primary/60 ring-2 ring-primary/20 bg-primary/5" : "border-border bg-card"
+                } transition-all duration-300`}
+              >
                 <textarea
                   value={logContent}
                   onChange={(e) => setLogContent(e.target.value)}
                   placeholder="Paste your OpenAI Realtime logs here...&#10;&#10;Example:&#10;2024-01-15T10:30:00.000Z - {&quot;type&quot;: &quot;session.created&quot;, ...}"
-                  className="w-full h-80 p-5 rounded-[2rem] border border-border bg-card text-foreground
-                           placeholder:text-muted-foreground resize-none font-mono text-sm
-                           focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary/40
-                           transition-all duration-300"
+                  className="w-full h-72 p-5 rounded-[2rem] bg-transparent text-foreground
+                           placeholder:text-muted-foreground resize-none font-mono text-sm border-none
+                           focus:outline-none"
                 />
+
                 <div className="absolute top-4 right-4 flex gap-2">
                   <button
                     onClick={handlePaste}
@@ -102,6 +156,28 @@ export function LogViewer() {
                   >
                     <ClipboardPaste className="w-4 h-4 text-muted-foreground" />
                   </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 px-5 pb-5 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>Drag & drop .log or .txt files, or choose a file</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={triggerFilePicker}
+                      className="px-3 py-2 rounded-[1rem] bg-muted/80 hover:bg-muted transition-all duration-300 text-xs font-medium"
+                    >
+                      Browse files
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".log,.txt"
+                      className="hidden"
+                      onChange={handleFileInput}
+                    />
+                  </div>
                 </div>
               </div>
 
