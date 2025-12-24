@@ -26,8 +26,8 @@ export function EventCard({ event, className }: EventCardProps) {
   return (
     <div
       className={cn(
-        "event-card border rounded-lg p-3 bg-card/50 backdrop-blur-sm",
-        "hover:bg-card/80 transition-all",
+        "event-card border border-border/60 rounded-[1.5rem] p-4 bg-card/40",
+        "hover:bg-card/70 hover:border-primary/25 transition-all duration-300",
         className
       )}
     >
@@ -37,7 +37,7 @@ export function EventCard({ event, className }: EventCardProps) {
         onClick={() => setIsExpanded(!isExpanded)}
       >
         {/* Expand indicator */}
-        <button className="mt-0.5 text-muted-foreground hover:text-foreground">
+        <button className="mt-0.5 text-muted-foreground hover:text-primary transition-all duration-300">
           {isExpanded ? (
             <ChevronDown className="w-4 h-4" />
           ) : (
@@ -51,28 +51,28 @@ export function EventCard({ event, className }: EventCardProps) {
             {/* Event type badge */}
             <Badge
               variant="outline"
-              className={cn("font-mono text-xs border", colorClasses)}
+              className={cn("font-mono text-xs border px-2.5 py-1", colorClasses)}
             >
               {eventType}
             </Badge>
 
             {/* Function name for function calls */}
             {event.event.name && (
-              <Badge variant="secondary" className="font-mono text-xs">
+              <Badge variant="secondary" className="font-mono text-xs px-2.5 py-1">
                 {String(event.event.name)}
               </Badge>
             )}
 
             {/* Timestamp */}
             {event.timestamp && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
                 {formatTimestamp(event.timestamp)}
               </span>
             )}
 
             {/* Line number */}
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Hash className="w-3 h-3" />
               {event.lineNumber}
             </span>
@@ -80,7 +80,7 @@ export function EventCard({ event, className }: EventCardProps) {
 
           {/* Preview data */}
           {previewData && (
-            <p className="text-sm text-muted-foreground mt-1 truncate">
+            <p className="text-sm text-muted-foreground mt-1.5 truncate">
               {previewData}
             </p>
           )}
@@ -89,7 +89,7 @@ export function EventCard({ event, className }: EventCardProps) {
 
       {/* Expanded content */}
       {isExpanded && (
-        <div className="mt-3 pt-3 border-t">
+        <div className="mt-4 pt-4 border-t border-border/40">
           <JsonViewer
             data={sanitizedData}
             initialExpanded={false}

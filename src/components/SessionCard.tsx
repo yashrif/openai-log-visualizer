@@ -33,18 +33,18 @@ export function SessionCard({
   return (
     <Card
       className={cn(
-        "bg-gradient-to-br from-card to-card/80 border-primary/20",
+        "bg-gradient-to-br from-card to-card/60 border-border/60 hover:border-primary/30 transition-all duration-300",
         className
       )}
     >
       <CardHeader
-        className="cursor-pointer select-none"
+        className="cursor-pointer select-none hover:bg-accent/5 transition-colors duration-300 rounded-t-[2rem]"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-start justify-between gap-4">
           {/* Left side - session info */}
           <div className="flex items-start gap-3">
-            <button className="mt-1 text-muted-foreground hover:text-foreground transition-colors">
+            <button className="mt-1.5 text-muted-foreground hover:text-primary transition-all duration-300">
               {isExpanded ? (
                 <ChevronDown className="w-5 h-5" />
               ) : (
@@ -52,29 +52,29 @@ export function SessionCard({
               )}
             </button>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
                 <h3 className="font-semibold text-lg">{session.id}</h3>
                 {session.model && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs px-2.5 py-1">
                     {session.model}
                   </Badge>
                 )}
                 {session.voice && (
-                  <Badge variant="outline" className="text-xs">
+                  <Badge variant="outline" className="text-xs px-2.5 py-1">
                     🎤 {session.voice}
                   </Badge>
                 )}
               </div>
 
               {/* Session metadata */}
-              <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+              <div className="flex items-center gap-5 mt-2 text-sm text-muted-foreground">
                 {session.startTime && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5" />
                     {formatTimestamp(session.startTime)}
                   </span>
                 )}
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5">
                   <MessageSquare className="w-3.5 h-3.5" />
                   {session.events.length} events
                 </span>
@@ -88,12 +88,12 @@ export function SessionCard({
           </div>
 
           {/* Right side - category indicators */}
-          <div className="flex flex-wrap gap-1 justify-end">
+          <div className="flex flex-wrap gap-1.5 justify-end">
             {categories.slice(0, 5).map((cat) => (
               <div
                 key={cat}
                 className={cn(
-                  "w-2 h-2 rounded-full",
+                  "w-2.5 h-2.5 rounded-full transition-all duration-300",
                   CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS]?.split(" ")[0] || "bg-gray-500/20"
                 )}
                 title={cat}
@@ -104,7 +104,7 @@ export function SessionCard({
 
         {/* Event type stats bar */}
         {!isExpanded && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
+          <div className="flex flex-wrap gap-2 mt-4">
             {Object.entries(stats)
               .sort((a, b) => b[1] - a[1])
               .slice(0, 6)
@@ -115,14 +115,14 @@ export function SessionCard({
                   <Badge
                     key={type}
                     variant="outline"
-                    className={cn("text-xs font-mono", colorClasses)}
+                    className={cn("text-xs font-mono px-2.5 py-1", colorClasses)}
                   >
-                    {type.split(".").pop()} <span className="ml-1 opacity-70">×{count}</span>
+                    {type.split(".").pop()} <span className="ml-1.5 opacity-60">×{count}</span>
                   </Badge>
                 );
               })}
             {Object.keys(stats).length > 6 && (
-              <Badge variant="outline" className="text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-xs text-muted-foreground px-2.5 py-1">
                 +{Object.keys(stats).length - 6} more
               </Badge>
             )}
@@ -132,7 +132,7 @@ export function SessionCard({
 
       {isExpanded && (
         <CardContent className="pt-0">
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {session.events.map((event, index) => (
               <EventCard
                 key={`${event.lineNumber}-${index}`}
