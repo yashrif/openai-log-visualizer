@@ -30,7 +30,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     return (
       <button
         className={cn(
-          "p-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors",
+          "p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors",
           className
         )}
       >
@@ -43,7 +43,7 @@ export function ThemeToggle({ className }: { className?: string }) {
     <button
       onClick={toggleTheme}
       className={cn(
-        "p-2 rounded-lg bg-muted hover:bg-muted/80 transition-all duration-300",
+        "p-2 rounded-full bg-muted hover:bg-muted/80 transition-all duration-300",
         "hover:scale-105 active:scale-95",
         className
       )}
