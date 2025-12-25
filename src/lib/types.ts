@@ -16,6 +16,15 @@ export type EventCategory =
 export interface OpenAIEvent {
   type: string;
   event_id: string;
+  // Allow additional properties
+  name?: string;
+  delta?: string;
+  transcript?: string;
+  arguments?: string;
+  response?: Record<string, unknown>;
+  session?: Record<string, unknown>;
+  error?: Record<string, unknown>;
+  rate_limits?: Array<Record<string, unknown>>;
   [key: string]: unknown;
 }
 
@@ -87,3 +96,20 @@ export const CATEGORY_COLORS: Record<EventCategory, string> = {
   rate_limits: "bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/40 dark:border-slate-500/30",
   unknown: "bg-gray-500/20 text-gray-700 dark:text-gray-300 border-gray-500/40 dark:border-gray-500/30",
 };
+
+// Delta events that should be aggregated when consecutive
+export const DELTA_EVENT_TYPES = [
+  "response.audio.delta",
+  "response.audio_transcript.delta",
+  "response.text.delta",
+  "response.function_call_arguments.delta",
+  "conversation.item.input_audio_transcription.delta",
+] as const;
+
+// Events that mark conversation phase transitions
+export const PHASE_EVENTS = {
+  SPEECH_START: "input_audio_buffer.speech_started",
+  SPEECH_STOP: "input_audio_buffer.speech_stopped",
+  RESPONSE_START: "response.created",
+  FUNCTION_CALL: "response.function_call_arguments.done",
+} as const;

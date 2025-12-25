@@ -1,18 +1,29 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, Clock, MessageSquare } from "lucide-react";
+import { ChevronDown, ChevronRight, Clock, MessageSquare, List, Layers } from "lucide-react";
 import { cn, formatTimestamp } from "@/lib/utils";
 import { Session, getEventCategory, CATEGORY_COLORS } from "@/lib/types";
 import { getSessionStats } from "@/lib/parse-log";
+import { groupEvents, EventGroup, ResponseCycle, DeltaGroup } from "@/lib/group-events";
+import type { ParsedLogLine } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EventCard } from "./EventCard";
+import { PhaseMarker } from "./PhaseMarker";
+import { ResponseCycleCard } from "./ResponseCycleCard";
+import { DeltaEventGroup } from "./DeltaEventGroup";
 
 interface SessionCardProps {
   session: Session;
   className?: string;
   defaultExpanded?: boolean;
+}
+
+type ViewMode = "flat" | "grouped";
+
+function isDeltaGroup(item: ParsedLogLine | DeltaGroup): item is DeltaGroup {
+  return (item as DeltaGroup).kind === "delta_group";
 }
 
 export function SessionCard({
@@ -21,6 +32,7 @@ export function SessionCard({
   defaultExpanded = true,
 }: SessionCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
+  const [viewMode, setViewMode] = useState<ViewMode>("grouped");
   const stats = useMemo(() => getSessionStats(session), [session]);
   const initialChunk = 200;
   const chunkSize = 200;
@@ -28,6 +40,14 @@ export function SessionCard({
     defaultExpanded ? Math.min(initialChunk, session.events.length) : 0
   );
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Group events when in grouped mode
+  const groupedEvents = useMemo(() => {
+    if (viewMode === "grouped") {
+      return groupEvents(session.events);
+    }
+    return null;
+  }, [session.events, viewMode]);
 
   useEffect(() => {
     // Reset visible items when session changes or collapse/expand toggles.
@@ -67,6 +87,30 @@ export function SessionCard({
     session.events.forEach((e) => cats.add(getEventCategory(e.event.type)));
     return Array.from(cats);
   }, [session.events]);
+
+  // Render grouped view item
+  const renderGroupedItem = (group: EventGroup, index: number) => {
+    switch (group.kind) {
+      case "phase":
+        return <PhaseMarker key={`phase-${group.lineNumber}-${index}`} type={group.type} />;
+      case "response_cycle":
+        return (
+          <ResponseCycleCard
+            key={`cycle-${(group as ResponseCycle).startEvent.lineNumber}-${index}`}
+            cycle={group as ResponseCycle}
+          />
+        );
+      case "standalone":
+        return (
+          <EventCard
+            key={`event-${group.event.lineNumber}-${index}`}
+            event={group.event}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <Card
@@ -170,20 +214,63 @@ export function SessionCard({
 
       {isExpanded && (
         <CardContent className="pt-0">
+          {/* View mode toggle */}
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-border/40">
+            <span className="text-xs text-muted-foreground">View:</span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setViewMode("grouped");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                viewMode === "grouped"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <Layers className="w-3 h-3" />
+              Grouped
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setViewMode("flat");
+              }}
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
+                viewMode === "flat"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              )}
+            >
+              <List className="w-3 h-3" />
+              Flat
+            </button>
+          </div>
+
           <div className="space-y-2.5">
-            {session.events.slice(0, visibleCount).map((event, index) => (
-              <EventCard
-                key={`${event.lineNumber}-${index}`}
-                event={event}
-              />
-            ))}
-            {visibleCount < session.events.length && (
-              <div
-                ref={sentinelRef}
-                className="flex justify-center py-4 text-sm text-muted-foreground"
-              >
-                Loading more events...
-              </div>
+            {viewMode === "grouped" && groupedEvents ? (
+              // Grouped view
+              groupedEvents.map((group, index) => renderGroupedItem(group, index))
+            ) : (
+              // Flat view (original)
+              <>
+                {session.events.slice(0, visibleCount).map((event, index) => (
+                  <EventCard
+                    key={`${event.lineNumber}-${index}`}
+                    event={event}
+                  />
+                ))}
+                {visibleCount < session.events.length && (
+                  <div
+                    ref={sentinelRef}
+                    className="flex justify-center py-4 text-sm text-muted-foreground"
+                  >
+                    Loading more events...
+                  </div>
+                )}
+              </>
             )}
           </div>
         </CardContent>
