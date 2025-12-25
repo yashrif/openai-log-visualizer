@@ -6,6 +6,7 @@ import { SessionCard } from "@/components/SessionCard";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Session } from "@/lib/types";
+import { Virtuoso } from "react-virtuoso";
 import { FileText, ClipboardPaste, Trash2, UploadCloud } from "lucide-react";
 
 export function LogViewer() {
@@ -82,6 +83,7 @@ export function LogViewer() {
   };
 
   const totalEvents = sessions.reduce((sum, s) => sum + s.events.length, 0);
+  const shouldVirtualizeSessions = sessions.length > 30;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/3">
@@ -248,13 +250,31 @@ export function LogViewer() {
             </div>
 
             {/* Sessions */}
-            {sessions.map((session, index) => (
-              <SessionCard
-                key={session.id}
-                session={session}
-                defaultExpanded={index === 0}
+            {shouldVirtualizeSessions ? (
+              <Virtuoso
+                useWindowScroll
+                increaseViewportBy={{ top: 320, bottom: 640 }}
+                data={sessions}
+                overscan={300}
+                computeItemKey={(index, session) => session.id ?? `session-${index}`}
+                itemContent={(index, session) => (
+                  <div className="pb-6">
+                    <SessionCard
+                      session={session}
+                      defaultExpanded={index === 0}
+                    />
+                  </div>
+                )}
               />
-            ))}
+            ) : (
+              sessions.map((session, index) => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  defaultExpanded={index === 0}
+                />
+              ))
+            )}
           </div>
         )}
       </main>

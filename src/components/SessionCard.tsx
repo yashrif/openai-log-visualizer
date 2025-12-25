@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { ChevronDown, ChevronRight, Zap, Clock, MessageSquare } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, Clock, MessageSquare } from "lucide-react";
 import { cn, formatTimestamp } from "@/lib/utils";
 import { Session, getEventCategory, CATEGORY_COLORS } from "@/lib/types";
 import { getSessionStats } from "@/lib/parse-log";
@@ -22,6 +22,44 @@ export function SessionCard({
 }: SessionCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const stats = useMemo(() => getSessionStats(session), [session]);
+  const initialChunk = 200;
+  const chunkSize = 200;
+  const [visibleCount, setVisibleCount] = useState(
+    defaultExpanded ? Math.min(initialChunk, session.events.length) : 0
+  );
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Reset visible items when session changes or collapse/expand toggles.
+    if (isExpanded) {
+      setVisibleCount((count) => (count === 0 ? Math.min(initialChunk, session.events.length) : count));
+    } else {
+      setVisibleCount(0);
+    }
+  }, [isExpanded, session.events.length]);
+
+  useEffect(() => {
+    if (!isExpanded) return;
+    const target = sentinelRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setVisibleCount((count) => Math.min(count + chunkSize, session.events.length));
+        }
+      },
+      {
+        root: null,
+        rootMargin: "600px 0px",
+        threshold: 0,
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [chunkSize, isExpanded, session.events.length]);
 
   // Get unique event categories for badges
   const categories = useMemo(() => {
@@ -133,12 +171,20 @@ export function SessionCard({
       {isExpanded && (
         <CardContent className="pt-0">
           <div className="space-y-2.5">
-            {session.events.map((event, index) => (
+            {session.events.slice(0, visibleCount).map((event, index) => (
               <EventCard
                 key={`${event.lineNumber}-${index}`}
                 event={event}
               />
             ))}
+            {visibleCount < session.events.length && (
+              <div
+                ref={sentinelRef}
+                className="flex justify-center py-4 text-sm text-muted-foreground"
+              >
+                Loading more events...
+              </div>
+            )}
           </div>
         </CardContent>
       )}
