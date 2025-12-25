@@ -8,6 +8,7 @@ import type { DeltaGroup } from "@/lib/group-events";
 import { getDeltaGroupStats } from "@/lib/group-events";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "./EventCard";
+import { AudioPlayButton } from "./AudioPlayButton";
 
 interface DeltaEventGroupProps {
   group: DeltaGroup;
@@ -61,6 +62,13 @@ export function DeltaEventGroup({ group, className }: DeltaEventGroupProps) {
           <Hash className="w-3 h-3" />
           {group.firstLineNumber}–{group.lastLineNumber}
         </span>
+
+        {/* Audio Play Button for audio.delta groups */}
+        {group.eventType === "response.audio.delta" && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <AudioPlayButton events={group.events} />
+          </div>
+        )}
 
         {/* Aggregated transcript preview */}
         {stats.aggregatedText && (
