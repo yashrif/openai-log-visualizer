@@ -8,6 +8,7 @@ import type { ParsedLogLine } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "./EventCard";
 import { DeltaEventGroup } from "./DeltaEventGroup";
+import { AudioDoneBlock } from "./AudioDoneBlock";
 
 interface ResponseCycleCardProps {
   cycle: ResponseCycle;
@@ -147,11 +148,31 @@ export function ResponseCycleCard({ cycle, className }: ResponseCycleCardProps) 
                 />
               );
             }
+
+            // Check if this is a response.audio.done event
+            const isAudioDone = item.event.type === "response.audio.done";
+
+            // Collect ALL audio delta groups from the entire cycle for audio done events
+            let audioDeltaGroups: DeltaGroup[] = [];
+            if (isAudioDone) {
+              // Collect all audio delta groups from the entire response cycle
+              audioDeltaGroups = cycle.items.filter(
+                (cycleItem): cycleItem is DeltaGroup =>
+                  isDeltaGroup(cycleItem) && cycleItem.eventType === "response.audio.delta"
+              );
+            }
+
             return (
-              <EventCard
-                key={`event-${item.lineNumber}-${index}`}
-                event={item}
-              />
+              <div key={`event-${item.lineNumber}-${index}`}>
+                <EventCard event={item} />
+                {/* Render AudioDoneBlock after response.audio.done */}
+                {isAudioDone && audioDeltaGroups.length > 0 && (
+                  <AudioDoneBlock
+                    audioDeltaGroups={audioDeltaGroups}
+                    className="mt-2"
+                  />
+                )}
+              </div>
             );
           })}
         </div>
