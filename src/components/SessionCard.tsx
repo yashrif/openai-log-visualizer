@@ -79,7 +79,7 @@ export function SessionCard({
 
     observer.observe(target);
     return () => observer.disconnect();
-  }, [chunkSize, isExpanded, session.events.length]);
+  }, [chunkSize, isExpanded, session.events.length, viewMode]);
 
   // Get unique event categories for badges
   const categories = useMemo(() => {
