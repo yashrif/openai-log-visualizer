@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, Copy, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface JsonViewerProps {
   data: unknown;
@@ -87,23 +88,32 @@ function JsonNode({
   }
 
   if (typeof data === "string") {
+    const isLongString = data.length > maxStringLength;
+    const [isStringExpanded, setIsStringExpanded] = useState(false);
     const displayValue =
-      data.length > maxStringLength
+      isLongString && !isStringExpanded
         ? data.slice(0, maxStringLength) + "..."
         : data;
-    const isLongString = data.length > maxStringLength;
 
     return (
       <span className="json-string">
         {keyName && <span className="json-key">"{keyName}"</span>}
         {keyName && ": "}
-        <span title={isLongString ? data : undefined}>
+        <span className="whitespace-pre-wrap break-words">
           "{displayValue}"
         </span>
         {isLongString && (
-          <span className="text-muted-foreground text-xs ml-1">
-            ({data.length} chars)
-          </span>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsStringExpanded(!isStringExpanded);
+            }}
+            className="text-xs ml-1 h-6 px-2"
+          >
+            {isStringExpanded ? "collapse" : `show all (${data.length} chars)`}
+          </Button>
         )}
       </span>
     );
